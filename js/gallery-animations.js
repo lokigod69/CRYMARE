@@ -167,13 +167,13 @@ class GalleryAnimations {
 
         // Hover effects
         document.addEventListener('mouseenter', (e) => {
-            if (e.target.matches('.gallery-grid-item, .view-mode-btn, .related-card')) {
+            if (e.target && e.target.matches && e.target.matches('.gallery-grid-item, .view-mode-btn, .related-card')) {
                 document.body.classList.add('cursor-hover');
             }
         }, true);
 
         document.addEventListener('mouseleave', (e) => {
-            if (e.target.matches('.gallery-grid-item, .view-mode-btn, .related-card')) {
+            if (e.target && e.target.matches && e.target.matches('.gallery-grid-item, .view-mode-btn, .related-card')) {
                 document.body.classList.remove('cursor-hover');
             }
         }, true);
@@ -186,46 +186,72 @@ class GalleryAnimations {
         const tl = gsap.timeline();
 
         // Header entrance
-        tl.from('.gallery-header', {
-            duration: 1.5,
-            y: -100,
-            opacity: 0,
-            ease: 'power3.out'
-        })
-        .from('.breadcrumb', {
-            duration: 1,
-            x: -50,
-            opacity: 0,
-            ease: 'power2.out'
-        }, 0.3)
-        .from('.gallery-title', {
-            duration: 1.2,
-            y: 50,
-            opacity: 0,
-            ease: 'power3.out'
-        }, 0.5)
-        .from('.gallery-description', {
-            duration: 1,
-            y: 30,
-            opacity: 0,
-            ease: 'power2.out'
-        }, 0.7)
-        .from('.gallery-meta > *', {
-            duration: 0.8,
-            y: 20,
-            opacity: 0,
-            stagger: 0.1,
-            ease: 'power2.out'
-        }, 0.9);
+        const galleryHeader = document.querySelector('.gallery-header');
+        if (galleryHeader) {
+            tl.from(galleryHeader, {
+                duration: 1.5,
+                y: -100,
+                opacity: 0,
+                ease: 'power3.out'
+            });
+        }
 
-        // Controls entrance
-        gsap.from('.gallery-controls', {
-            duration: 1.2,
-            y: 30,
-            opacity: 0,
-            ease: 'power3.out',
-            delay: 1.2
-        });
+        // Breadcrumb (if exists)
+        const breadcrumb = document.querySelector('.breadcrumb');
+        if (breadcrumb) {
+            tl.from(breadcrumb, {
+                duration: 1,
+                x: -50,
+                opacity: 0,
+                ease: 'power2.out'
+            }, 0.3);
+        }
+
+        // Gallery title
+        const galleryTitle = document.querySelector('.gallery-title');
+        if (galleryTitle) {
+            tl.from(galleryTitle, {
+                duration: 1.2,
+                y: 50,
+                opacity: 0,
+                ease: 'power3.out'
+            }, 0.5);
+        }
+
+        // Gallery description (if exists)
+        const galleryDescription = document.querySelector('.gallery-description');
+        if (galleryDescription) {
+            tl.from(galleryDescription, {
+                duration: 1,
+                y: 30,
+                opacity: 0,
+                ease: 'power2.out'
+            }, 0.7);
+        }
+
+        // Gallery meta (if exists)
+        const galleryMeta = document.querySelectorAll('.gallery-meta > *');
+        if (galleryMeta.length > 0) {
+            tl.from(galleryMeta, {
+                duration: 0.8,
+                y: 20,
+                opacity: 0,
+                stagger: 0.1,
+                ease: 'power2.out'
+            }, 0.9);
+        }
+
+        // Controls entrance (if exists)
+        const galleryControls = document.querySelector('.gallery-controls');
+        if (galleryControls) {
+            gsap.from(galleryControls, {
+                duration: 1.2,
+                y: 30,
+                opacity: 0,
+                ease: 'power3.out',
+                delay: 1.2
+            });
+        }
     }
 
     // =========================
@@ -348,21 +374,23 @@ class GalleryAnimations {
 
                 // Animate image entrance
                 const modalImage = modal.querySelector('.modal-image');
-                gsap.fromTo(modalImage,
-                    {
-                        y: this.isDesktop ? 50 : 30,
-                        opacity: 0,
-                        scale: 0.9
-                    },
-                    {
-                        duration: 0.8,
-                        y: 0,
-                        opacity: 1,
-                        scale: 1,
-                        ease: 'power3.out',
-                        delay: 0.2
-                    }
-                );
+                if (modalImage) {
+                    gsap.fromTo(modalImage,
+                        {
+                            y: this.isDesktop ? 50 : 30,
+                            opacity: 0,
+                            scale: 0.9
+                        },
+                        {
+                            duration: 0.8,
+                            y: 0,
+                            opacity: 1,
+                            scale: 1,
+                            ease: 'power3.out',
+                            delay: 0.2
+                        }
+                    );
+                }
 
                 // Mobile-specific animations
                 if (!this.isDesktop) {
@@ -380,14 +408,16 @@ class GalleryAnimations {
 
                     // Animate touch zones with subtle hint
                     const touchZones = modal.querySelectorAll('.touch-zone');
-                    gsap.from(touchZones, {
-                        duration: 0.8,
-                        opacity: 0,
-                        scale: 0.8,
-                        stagger: 0.1,
-                        ease: 'power2.out',
-                        delay: 0.5
-                    });
+                    if (touchZones.length > 0) {
+                        gsap.from(touchZones, {
+                            duration: 0.8,
+                            opacity: 0,
+                            scale: 0.8,
+                            stagger: 0.1,
+                            ease: 'power2.out',
+                            delay: 0.5
+                        });
+                    }
 
                     // Animate swipe indicator
                     const swipeIndicator = modal.querySelector('.swipe-indicator');
@@ -403,14 +433,17 @@ class GalleryAnimations {
                     }
                 } else {
                     // Desktop controls animation
-                    gsap.from(modal.querySelectorAll('.modal-prev, .modal-next, .modal-close'), {
-                        duration: 0.6,
-                        opacity: 0,
-                        scale: 0.8,
-                        stagger: 0.1,
-                        ease: 'back.out(1.7)',
-                        delay: 0.4
-                    });
+                    const desktopControls = modal.querySelectorAll('.modal-prev, .modal-next, .modal-close');
+                    if (desktopControls.length > 0) {
+                        gsap.from(desktopControls, {
+                            duration: 0.6,
+                            opacity: 0,
+                            scale: 0.8,
+                            stagger: 0.1,
+                            ease: 'back.out(1.7)',
+                            delay: 0.4
+                        });
+                    }
                 }
             };
         }
@@ -439,6 +472,8 @@ class GalleryAnimations {
                 const modalImage = modal.querySelector('.modal-image');
                 const counter = modal.querySelector('.modal-counter');
 
+                if (!modalImage) return; // Exit if modal image doesn't exist
+
                 // Smooth image transition
                 const isMobileView = window.innerWidth <= 768;
                 gsap.to(modalImage, {
@@ -461,15 +496,17 @@ class GalleryAnimations {
                         
                         // Animate in new image
                         const isMobileView = window.innerWidth <= 768;
-                        gsap.fromTo(modalImage,
-                            { opacity: 0, x: isMobileView ? 15 : 30 },
-                            {
-                                duration: 0.5,
-                                opacity: 1,
-                                x: 0,
-                                ease: 'power2.out'
-                            }
-                        );
+                        if (modalImage) {
+                            gsap.fromTo(modalImage,
+                                { opacity: 0, x: isMobileView ? 15 : 30 },
+                                {
+                                    duration: 0.5,
+                                    opacity: 1,
+                                    x: 0,
+                                    ease: 'power2.out'
+                                }
+                            );
+                        }
                     }
                 });
             };
