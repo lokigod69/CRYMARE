@@ -45,6 +45,12 @@
         </div>
     </header>
 
+    <!-- Gallery Loading Overlay -->
+    <div class="gallery-loading-overlay" id="gallery-loading-overlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Discovering Artworks...</div>
+    </div>
+
     <main class="gallery-main">
         <!-- Gallery Header -->
         <section class="gallery-header">
@@ -56,7 +62,35 @@
         <!-- Gallery Grid -->
         <section class="gallery-grid-section">
             <div class="container">
-                <div class="gallery-grid" id="gallery-grid">
+                <!-- Mobile Loading Message -->
+                <div class="mobile-loading-message" id="mobile-loading-message" style="display: none;">
+                    <h3>🎨 Curating Your Gallery</h3>
+                    <p>We're carefully loading these beautiful artworks for the best viewing experience. Thank you for your patience!</p>
+                </div>
+                
+                <!-- Gallery Grid Skeleton (shown while loading) -->
+                <div class="gallery-grid-skeleton" id="gallery-grid-skeleton">
+                    <div class="grid-skeleton-item">
+                        <div class="skeleton-shimmer"></div>
+                    </div>
+                    <div class="grid-skeleton-item">
+                        <div class="skeleton-shimmer"></div>
+                    </div>
+                    <div class="grid-skeleton-item">
+                        <div class="skeleton-shimmer"></div>
+                    </div>
+                    <div class="grid-skeleton-item">
+                        <div class="skeleton-shimmer"></div>
+                    </div>
+                    <div class="grid-skeleton-item">
+                        <div class="skeleton-shimmer"></div>
+                    </div>
+                    <div class="grid-skeleton-item">
+                        <div class="skeleton-shimmer"></div>
+                    </div>
+                </div>
+                
+                <div class="gallery-grid" id="gallery-grid" style="display: none;">
                     <!-- Images will be dynamically populated here -->
                 </div>
                 
@@ -88,11 +122,30 @@
             <div class="modal-backdrop"></div>
             <div class="modal-content">
                 <button class="modal-close">×</button>
-                <div class="modal-image-container">
+                
+                <!-- Mobile-friendly top bar -->
+                <div class="mobile-modal-header">
+                    <div class="modal-counter" id="modal-counter">1 / 6</div>
+                    <button class="mobile-close-btn">✕</button>
+                </div>
+                
+                <!-- Swipeable image container -->
+                <div class="modal-image-container" id="modal-image-container">
                     <img class="modal-image" id="modal-image" src="" alt="">
+                    
+                    <!-- Touch zones for navigation -->
+                    <div class="touch-zone touch-zone-left" data-action="prev"></div>
+                    <div class="touch-zone touch-zone-right" data-action="next"></div>
+                    
+                    <!-- Mobile controls -->
                     <div class="modal-controls">
                         <button class="modal-prev">❮</button>
                         <button class="modal-next">❯</button>
+                    </div>
+                    
+                    <!-- Swipe indicator -->
+                    <div class="swipe-indicator" id="swipe-indicator">
+                        <div class="swipe-hint">← Swipe to navigate →</div>
                     </div>
                 </div>
 

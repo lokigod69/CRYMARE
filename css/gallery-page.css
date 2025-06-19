@@ -1,6 +1,7 @@
 /*
  * Gallery Page Styles for Crymare Gallery
  * Individual series pages with grid/slideshow views, modal viewer, and animations
+ * Updated: Added artistic loading mechanisms for mobile experience
  */
 
 /* Gallery Header */
@@ -544,5 +545,448 @@
     
     .modal-controls {
         padding: 0 0.5rem;
+    }
+}
+
+/* =========================
+   LOADING ANIMATIONS & STATES
+   ========================= */
+
+/* Page Loading Overlay */
+.gallery-loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, var(--primary-bg-color) 0%, var(--secondary-bg-color) 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 1;
+    transition: opacity 0.8s ease, visibility 0.8s ease;
+}
+
+.gallery-loading-overlay.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* Artistic Loading Spinner */
+.loading-spinner {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    margin-bottom: 2rem;
+}
+
+.loading-spinner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 3px solid transparent;
+    border-top: 3px solid var(--accent-color);
+    border-radius: 50%;
+    animation: spin 1.5s linear infinite;
+}
+
+.loading-spinner::after {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: calc(100% - 20px);
+    height: calc(100% - 20px);
+    border: 2px solid transparent;
+    border-bottom: 2px solid rgba(201, 169, 110, 0.5);
+    border-radius: 50%;
+    animation: spin 2s linear infinite reverse;
+}
+
+.loading-text {
+    font-family: var(--header-font);
+    font-size: 1.5rem;
+    color: var(--text-color);
+    opacity: 0.8;
+    letter-spacing: 1px;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 0.4; }
+}
+
+/* Grid Loading Skeletons */
+.gallery-grid-skeleton {
+    display: grid;
+    grid-template-columns: repeat(3, 250px);
+    gap: 4.5rem;
+    padding: 2rem 0;
+    justify-content: center;
+    margin: 0 auto;
+}
+
+.grid-skeleton-item {
+    background: var(--secondary-bg-color);
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    aspect-ratio: 1/1;
+    width: 250px;
+    height: 250px;
+}
+
+.skeleton-shimmer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        rgba(255,255,255,0) 0%,
+        rgba(255,255,255,0.1) 20%,
+        rgba(255,255,255,0.2) 50%,
+        rgba(255,255,255,0.1) 80%,
+        rgba(255,255,255,0) 100%
+    );
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+/* Individual Image Loading States */
+.gallery-grid-item.loading {
+    position: relative;
+}
+
+.gallery-grid-item.loading::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(2px);
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.gallery-grid-item.loading::after {
+    content: '🎨';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2rem;
+    z-index: 3;
+    animation: float 2s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translate(-50%, -50%) translateY(0px); }
+    50% { transform: translate(-50%, -50%) translateY(-10px); }
+}
+
+/* Image Error State */
+.gallery-grid-item.error {
+    background: var(--secondary-bg-color);
+    border: 2px dashed rgba(201, 169, 110, 0.3);
+    opacity: 0.6;
+}
+
+.gallery-grid-item.error::after {
+    content: '📷';
+    font-size: 2rem;
+    opacity: 0.5;
+}
+
+/* =========================
+   ENHANCED MOBILE MODAL
+   ========================= */
+
+/* Mobile Modal Header */
+.mobile-modal-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+    display: none; /* Hidden by default, shown on mobile */
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 1rem;
+    z-index: 1001;
+    backdrop-filter: blur(10px);
+}
+
+.modal-counter {
+    color: white;
+    font-family: var(--body-font);
+    font-size: 1.1rem;
+    font-weight: 500;
+    opacity: 0.9;
+}
+
+.mobile-close-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.mobile-close-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+/* Touch Zones for Navigation */
+.touch-zone {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 40%;
+    z-index: 1000;
+    cursor: pointer;
+    display: none; /* Hidden by default, shown on mobile */
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.touch-zone-left {
+    left: 0;
+    background: linear-gradient(to right, rgba(0,0,0,0.1), transparent);
+}
+
+.touch-zone-right {
+    right: 0;
+    background: linear-gradient(to left, rgba(0,0,0,0.1), transparent);
+}
+
+.touch-zone:hover {
+    background-color: rgba(201, 169, 110, 0.1);
+}
+
+.touch-zone::before {
+    content: '';
+    font-size: 2rem;
+    color: rgba(255, 255, 255, 0.6);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.touch-zone-left::before {
+    content: '❮';
+}
+
+.touch-zone-right::before {
+    content: '❯';
+}
+
+.touch-zone:hover::before {
+    opacity: 1;
+}
+
+/* Swipe Indicator */
+.swipe-indicator {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.7);
+    padding: 0.8rem 1.5rem;
+    border-radius: 25px;
+    z-index: 1001;
+    opacity: 1;
+    transition: opacity 0.5s ease;
+    backdrop-filter: blur(10px);
+    animation: swipeHint 3s ease-in-out infinite;
+    display: none; /* Hidden by default, shown on mobile */
+}
+
+.swipe-indicator.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.swipe-hint {
+    color: white;
+    font-family: var(--body-font);
+    font-size: 0.9rem;
+    font-weight: 400;
+    letter-spacing: 0.5px;
+}
+
+@keyframes swipeHint {
+    0%, 100% { opacity: 0.8; transform: translateX(-50%) scale(1); }
+    50% { opacity: 1; transform: translateX(-50%) scale(1.05); }
+}
+
+/* Enhanced Modal Image Container */
+.modal-image-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    touch-action: pan-x;
+}
+
+/* Swipe Feedback Animation */
+.modal-image-container.swiping-left .modal-image {
+    transform: translateX(-20px);
+    transition: transform 0.3s ease;
+}
+
+.modal-image-container.swiping-right .modal-image {
+    transform: translateX(20px);
+    transition: transform 0.3s ease;
+}
+
+.modal-image-container.swipe-complete .modal-image {
+    transform: translateX(0);
+    transition: transform 0.5s ease;
+}
+
+/* Mobile-specific Loading Improvements */
+@media (max-width: 768px) {
+    .loading-spinner {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .loading-text {
+        font-size: 1.2rem;
+    }
+    
+    .gallery-grid-skeleton {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 2rem;
+        padding: 1rem;
+    }
+    
+    .grid-skeleton-item {
+        width: 100%;
+        height: auto;
+    }
+    
+    /* Mobile Grid Loading Message */
+    .mobile-loading-message {
+        text-align: center;
+        padding: 2rem 1rem;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 16px;
+        margin: 2rem auto;
+        max-width: 90%;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(201, 169, 110, 0.2);
+    }
+    
+    .mobile-loading-message h3 {
+        font-family: var(--header-font);
+        color: var(--accent-color);
+        margin: 0 0 1rem 0;
+        font-size: 1.3rem;
+    }
+    
+    .mobile-loading-message p {
+        color: var(--text-color);
+        opacity: 0.8;
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    /* Enhanced Mobile Modal Styles */
+    .modal-close {
+        display: none; /* Hide desktop close button on mobile */
+    }
+
+    .mobile-modal-header {
+        display: flex; /* Show mobile header */
+    }
+
+    .modal-controls {
+        display: none; /* Hide desktop controls on mobile, use touch zones instead */
+    }
+
+    .touch-zone {
+        display: flex; /* Enable touch zones on mobile */
+    }
+
+    .swipe-indicator {
+        display: block; /* Show swipe hint on mobile */
+    }
+
+    .modal-content {
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+        border-radius: 0;
+    }
+
+    .modal-image-container {
+        height: 100vh;
+        padding-top: 60px; /* Account for mobile header */
+    }
+
+    .modal-image {
+        max-height: calc(100vh - 120px); /* Account for header and bottom spacing */
+        object-fit: contain;
+    }
+
+    /* Prevent scroll behind modal */
+    body.modal-open {
+        overflow: hidden;
+        position: fixed;
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .gallery-grid-skeleton {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+        padding: 1rem;
+    }
+    
+    .loading-text {
+        font-size: 1.1rem;
+        text-align: center;
+    }
+    
+    .mobile-loading-message {
+        padding: 1.5rem 1rem;
+    }
+    
+    .mobile-loading-message h3 {
+        font-size: 1.2rem;
     }
 } 

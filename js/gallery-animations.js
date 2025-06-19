@@ -1,6 +1,7 @@
 /*
  * Phase 3: Advanced GSAP Animations for Crymare Gallery Pages
  * Premium effects: Magnetic cursor, image reveals, smooth transitions, zoom effects
+ * Updated: Enhanced loading animations for mobile experience
  */
 
 gsap.registerPlugin(ScrollTrigger, Draggable, MotionPathPlugin);
@@ -15,6 +16,7 @@ class GalleryAnimations {
 
     init() {
         this.createCustomCursor();
+        this.setupLoadingAnimations();
         this.setupPageLoadAnimations();
         this.setupScrollAnimations();
         this.setupModalAnimations();
@@ -22,7 +24,72 @@ class GalleryAnimations {
         this.setupImageRevealAnimations();
         this.setupViewModeTransitions();
         
-        console.log('🎨 Phase 3: Advanced gallery animations initialized!');
+        console.log('🎨 Phase 3: Advanced gallery animations with loading states initialized!');
+    }
+
+    // =========================
+    // LOADING ANIMATIONS
+    // =========================
+    setupLoadingAnimations() {
+        // Animate loading overlay entrance
+        const overlay = document.getElementById('gallery-loading-overlay');
+        if (overlay) {
+            gsap.from(overlay, {
+                duration: 0.8,
+                opacity: 0,
+                scale: 0.9,
+                ease: 'power2.out'
+            });
+
+            // Animate spinner
+            const spinner = overlay.querySelector('.loading-spinner');
+            if (spinner) {
+                gsap.from(spinner, {
+                    duration: 1,
+                    scale: 0,
+                    rotation: -180,
+                    ease: 'back.out(1.7)',
+                    delay: 0.3
+                });
+            }
+
+            // Animate loading text
+            const loadingText = overlay.querySelector('.loading-text');
+            if (loadingText) {
+                gsap.from(loadingText, {
+                    duration: 0.8,
+                    y: 30,
+                    opacity: 0,
+                    ease: 'power2.out',
+                    delay: 0.5
+                });
+            }
+        }
+
+        // Animate skeleton grid entrance
+        const skeletonItems = document.querySelectorAll('.grid-skeleton-item');
+        if (skeletonItems.length > 0) {
+            gsap.from(skeletonItems, {
+                duration: 0.6,
+                y: 50,
+                opacity: 0,
+                stagger: 0.1,
+                ease: 'power2.out',
+                delay: 0.8
+            });
+        }
+
+        // Animate mobile loading message
+        const mobileMessage = document.getElementById('mobile-loading-message');
+        if (mobileMessage && this.isDesktop === false) {
+            gsap.from(mobileMessage, {
+                duration: 0.8,
+                y: 30,
+                opacity: 0,
+                ease: 'power2.out',
+                delay: 1
+            });
+        }
     }
 
     // =========================
@@ -189,9 +256,65 @@ class GalleryAnimations {
     // IMAGE REVEAL ANIMATIONS
     // =========================
     setupImageRevealAnimations() {
-        // Removed all scroll-triggered animations for grid items
-        // Grid items are now always visible with clean hover effects only
-        console.log('Grid items will be immediately visible with hover effects only');
+        // Enhanced grid reveal animation when transitioning from skeleton
+        const gridContainer = document.getElementById('gallery-grid');
+        if (gridContainer) {
+            // Set up observer for when grid becomes visible
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                        const displayValue = gridContainer.style.display;
+                        if (displayValue === 'grid' && !gridContainer.hasAttribute('data-animated')) {
+                            gridContainer.setAttribute('data-animated', 'true');
+                            this.animateGridReveal();
+                        }
+                    }
+                });
+            });
+            
+            observer.observe(gridContainer, {
+                attributes: true,
+                attributeFilter: ['style']
+            });
+        }
+        
+        console.log('Grid reveal animations ready for loading transition');
+    }
+
+    animateGridReveal() {
+        const gridItems = document.querySelectorAll('.gallery-grid-item');
+        
+        // Animate grid items entrance
+        gsap.fromTo(gridItems, 
+            {
+                opacity: 0,
+                y: 30,
+                scale: 0.9
+            },
+            {
+                duration: 0.8,
+                opacity: 1,
+                y: 0,
+                scale: 1,
+                stagger: 0.1,
+                ease: 'power3.out'
+            }
+        );
+
+        // Add shimmer effect for mobile
+        if (!this.isDesktop) {
+            gridItems.forEach((item, index) => {
+                const img = item.querySelector('img');
+                if (img) {
+                    gsap.from(img, {
+                        duration: 1.2,
+                        filter: 'brightness(0.3)',
+                        ease: 'power2.out',
+                        delay: index * 0.05
+                    });
+                }
+            });
+        }
     }
 
     // =========================
@@ -211,7 +334,7 @@ class GalleryAnimations {
                 gsap.fromTo(modal, 
                     { 
                         opacity: 0,
-                        scale: 0.8,
+                        scale: this.isDesktop ? 0.8 : 1,
                         filter: 'blur(10px)'
                     },
                     {
@@ -227,7 +350,7 @@ class GalleryAnimations {
                 const modalImage = modal.querySelector('.modal-image');
                 gsap.fromTo(modalImage,
                     {
-                        y: 50,
+                        y: this.isDesktop ? 50 : 30,
                         opacity: 0,
                         scale: 0.9
                     },
@@ -241,24 +364,54 @@ class GalleryAnimations {
                     }
                 );
 
-                // Animate controls
-                gsap.from(modal.querySelectorAll('.modal-prev, .modal-next, .modal-close'), {
-                    duration: 0.6,
-                    opacity: 0,
-                    scale: 0.8,
-                    stagger: 0.1,
-                    ease: 'back.out(1.7)',
-                    delay: 0.4
-                });
+                // Mobile-specific animations
+                if (!this.isDesktop) {
+                    // Animate mobile header
+                    const mobileHeader = modal.querySelector('.mobile-modal-header');
+                    if (mobileHeader) {
+                        gsap.from(mobileHeader, {
+                            duration: 0.6,
+                            y: -60,
+                            opacity: 0,
+                            ease: 'power2.out',
+                            delay: 0.3
+                        });
+                    }
 
-                // Animate info panel
-                gsap.from(modal.querySelector('.modal-info'), {
-                    duration: 0.8,
-                    y: 30,
-                    opacity: 0,
-                    ease: 'power2.out',
-                    delay: 0.6
-                });
+                    // Animate touch zones with subtle hint
+                    const touchZones = modal.querySelectorAll('.touch-zone');
+                    gsap.from(touchZones, {
+                        duration: 0.8,
+                        opacity: 0,
+                        scale: 0.8,
+                        stagger: 0.1,
+                        ease: 'power2.out',
+                        delay: 0.5
+                    });
+
+                    // Animate swipe indicator
+                    const swipeIndicator = modal.querySelector('.swipe-indicator');
+                    if (swipeIndicator) {
+                        gsap.from(swipeIndicator, {
+                            duration: 0.8,
+                            y: 30,
+                            opacity: 0,
+                            scale: 0.8,
+                            ease: 'back.out(1.7)',
+                            delay: 1.2
+                        });
+                    }
+                } else {
+                    // Desktop controls animation
+                    gsap.from(modal.querySelectorAll('.modal-prev, .modal-next, .modal-close'), {
+                        duration: 0.6,
+                        opacity: 0,
+                        scale: 0.8,
+                        stagger: 0.1,
+                        ease: 'back.out(1.7)',
+                        delay: 0.4
+                    });
+                }
             };
         }
 
@@ -269,7 +422,7 @@ class GalleryAnimations {
                 gsap.to(modal, {
                     duration: 0.4,
                     opacity: 0,
-                    scale: 0.9,
+                    scale: this.isDesktop ? 0.9 : 1,
                     filter: 'blur(5px)',
                     ease: 'power2.in',
                     onComplete: () => {
@@ -279,25 +432,37 @@ class GalleryAnimations {
             };
         }
 
-        // Image transition animations
+        // Enhanced image transition animations with mobile optimization
         const originalUpdateModalImage = window.galleryLoader?.updateModalImage;
         if (originalUpdateModalImage && window.galleryLoader) {
             window.galleryLoader.updateModalImage = function() {
                 const modalImage = modal.querySelector('.modal-image');
+                const counter = modal.querySelector('.modal-counter');
 
-                // Animate out current image
+                // Smooth image transition
+                const isMobileView = window.innerWidth <= 768;
                 gsap.to(modalImage, {
                     duration: 0.3,
                     opacity: 0,
-                    x: -30,
+                    x: isMobileView ? -15 : -30,
                     ease: 'power2.in',
                     onComplete: () => {
                         // Update image source
                         originalUpdateModalImage.call(this);
                         
+                        // Animate counter update (mobile)
+                        if (counter) {
+                            gsap.from(counter, {
+                                duration: 0.4,
+                                scale: 1.1,
+                                ease: 'back.out(1.7)'
+                            });
+                        }
+                        
                         // Animate in new image
+                        const isMobileView = window.innerWidth <= 768;
                         gsap.fromTo(modalImage,
-                            { opacity: 0, x: 30 },
+                            { opacity: 0, x: isMobileView ? 15 : 30 },
                             {
                                 duration: 0.5,
                                 opacity: 1,

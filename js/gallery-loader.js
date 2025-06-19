@@ -6,6 +6,7 @@
  * C1-Cx: Carnival Spirit  
  * D1-Dx: Winter Chapel
  * And so on...
+ * Updated: Added artistic loading mechanisms for mobile experience
  */
 
 // Gallery series configuration with unique fonts
@@ -80,10 +81,20 @@ class GalleryLoader {
         this.currentSeries = null;
         this.images = [];
         this.currentImageIndex = 0;
+        this.isMobile = window.innerWidth <= 768;
+        this.loadingStates = {
+            pageLoading: true,
+            imagesLoading: true,
+            individualImages: new Set()
+        };
         this.init();
     }
 
     init() {
+        // Show initial loading states
+        this.showPageLoadingOverlay();
+        this.showSkeletonGrid();
+        
         // Get series from URL parameter or default to 'A'
         const urlParams = new URLSearchParams(window.location.search);
         this.currentSeries = urlParams.get('series') || 'A';
@@ -92,6 +103,59 @@ class GalleryLoader {
         this.loadGalleryInfo();
         this.loadImages();
         this.setupEventListeners();
+    }
+
+    // =========================
+    // LOADING STATE MANAGEMENT
+    // =========================
+    showPageLoadingOverlay() {
+        const overlay = document.getElementById('gallery-loading-overlay');
+        const loadingText = overlay.querySelector('.loading-text');
+        
+        // Update loading text based on viewport
+        if (this.isMobile) {
+            loadingText.textContent = 'Preparing Gallery...';
+        }
+        
+        overlay.classList.remove('hidden');
+    }
+
+    hidePageLoadingOverlay() {
+        const overlay = document.getElementById('gallery-loading-overlay');
+        overlay.classList.add('hidden');
+        this.loadingStates.pageLoading = false;
+    }
+
+    showSkeletonGrid() {
+        const skeleton = document.getElementById('gallery-grid-skeleton');
+        const mobileMessage = document.getElementById('mobile-loading-message');
+        
+        skeleton.style.display = 'grid';
+        
+        // Show mobile-specific message
+        if (this.isMobile) {
+            mobileMessage.style.display = 'block';
+        }
+    }
+
+    hideSkeletonGrid() {
+        const skeleton = document.getElementById('gallery-grid-skeleton');
+        const mobileMessage = document.getElementById('mobile-loading-message');
+        const realGrid = document.getElementById('gallery-grid');
+        
+        skeleton.style.display = 'none';
+        mobileMessage.style.display = 'none';
+        realGrid.style.display = 'grid';
+        
+        this.loadingStates.imagesLoading = false;
+    }
+
+    setImageLoading(index, isLoading) {
+        if (isLoading) {
+            this.loadingStates.individualImages.add(index);
+        } else {
+            this.loadingStates.individualImages.delete(index);
+        }
     }
 
     loadGalleryInfo() {
@@ -139,12 +203,23 @@ class GalleryLoader {
         const series = GALLERY_SERIES[this.currentSeries];
         if (!series) return;
 
+        // Update loading text
+        const loadingText = document.querySelector('.loading-text');
+        if (loadingText) {
+            loadingText.textContent = 'Discovering Images...';
+        }
+
         this.images = [];
         const assetsPath = 'assets/';
         
         // Try to load images from A1, A2, A3... up to expected count
         for (let i = 1; i <= series.expectedImages + 5; i++) { // +5 buffer for extra images
             const imagePath = `${assetsPath}${this.currentSeries}${i}.png`;
+            
+            // Update loading progress for mobile
+            if (this.isMobile && loadingText) {
+                loadingText.textContent = `Finding Image ${i}...`;
+            }
             
             try {
                 const exists = await this.imageExists(imagePath);
@@ -162,12 +237,22 @@ class GalleryLoader {
             }
         }
 
+        // Update loading text
+        if (loadingText) {
+            loadingText.textContent = 'Loading Gallery...';
+        }
+
         // Update total slides for slideshow
         document.getElementById('total-slides').textContent = this.images.length;
 
-        // Populate gallery grid
+        // Populate gallery grid with loading states
         this.populateGalleryGrid();
         this.populateSlideshow();
+
+        // Hide page loading after images are discovered
+        setTimeout(() => {
+            this.hidePageLoadingOverlay();
+        }, 800);
 
         console.log(`✅ Loaded ${this.images.length} images for ${series.title}`);
     }
@@ -185,22 +270,73 @@ class GalleryLoader {
         const gridContainer = document.getElementById('gallery-grid');
         gridContainer.innerHTML = '';
 
+        // Track loaded images for skeleton removal
+        let imagesLoaded = 0;
+        const totalImages = this.images.length;
+
         this.images.forEach((image, index) => {
             const gridItem = document.createElement('div');
-            gridItem.className = 'gallery-grid-item';
+            gridItem.className = 'gallery-grid-item loading';
             gridItem.setAttribute('data-index', index);
+            
+            // Create image element
+            const img = document.createElement('img');
+            img.src = image.src;
+            img.alt = image.title;
+            img.loading = 'lazy';
+            
+            // Set up loading states
+            this.setImageLoading(index, true);
+            
+            // Handle image load completion
+            img.onload = () => {
+                gridItem.classList.remove('loading');
+                this.setImageLoading(index, false);
+                imagesLoaded++;
+                
+                // Hide skeleton grid when all images are loaded
+                if (imagesLoaded === totalImages) {
+                    setTimeout(() => {
+                        this.hideSkeletonGrid();
+                    }, 300);
+                }
+            };
+            
+            // Handle image load error
+            img.onerror = () => {
+                gridItem.classList.remove('loading');
+                gridItem.classList.add('error');
+                this.setImageLoading(index, false);
+                imagesLoaded++;
+                
+                // Still hide skeleton even with errors
+                if (imagesLoaded === totalImages) {
+                    setTimeout(() => {
+                        this.hideSkeletonGrid();
+                    }, 300);
+                }
+            };
             
             gridItem.innerHTML = `
                 <div class="grid-image-container">
-                    <img src="${image.src}" alt="${image.title}" loading="lazy">
                 </div>
             `;
+            
+            // Append image to container
+            gridItem.querySelector('.grid-image-container').appendChild(img);
 
             // Add click event for modal
             gridItem.addEventListener('click', () => this.openModal(index));
             
             gridContainer.appendChild(gridItem);
         });
+
+        // Fallback: hide skeleton after reasonable time even if images haven't loaded
+        setTimeout(() => {
+            if (this.loadingStates.imagesLoading) {
+                this.hideSkeletonGrid();
+            }
+        }, 8000);
     }
 
     populateSlideshow() {
@@ -223,12 +359,40 @@ class GalleryLoader {
             }
         });
 
-        document.querySelector('.modal-prev').addEventListener('click', () => this.prevImage());
-        document.querySelector('.modal-next').addEventListener('click', () => this.nextImage());
+        // Desktop modal controls
+        const modalPrev = document.querySelector('.modal-prev');
+        const modalNext = document.querySelector('.modal-next');
+        if (modalPrev && modalNext) {
+            modalPrev.addEventListener('click', () => this.prevImage());
+            modalNext.addEventListener('click', () => this.nextImage());
+        }
+
+        // Mobile modal controls
+        const mobileCloseBtn = document.querySelector('.mobile-close-btn');
+        if (mobileCloseBtn) {
+            mobileCloseBtn.addEventListener('click', () => this.closeModal());
+        }
+
+        // Touch zones for mobile navigation
+        const touchZones = document.querySelectorAll('.touch-zone');
+        touchZones.forEach(zone => {
+            zone.addEventListener('click', (e) => {
+                const action = e.target.dataset.action;
+                if (action === 'prev') this.prevImage();
+                if (action === 'next') this.nextImage();
+            });
+        });
+
+        // Setup mobile swipe gestures
+        this.setupMobileSwipeGestures();
 
         // Slideshow controls
-        document.querySelector('.prev-slide').addEventListener('click', () => this.prevSlide());
-        document.querySelector('.next-slide').addEventListener('click', () => this.nextSlide());
+        const prevSlide = document.querySelector('.prev-slide');
+        const nextSlide = document.querySelector('.next-slide');
+        if (prevSlide && nextSlide) {
+            prevSlide.addEventListener('click', () => this.prevSlide());
+            nextSlide.addEventListener('click', () => this.nextSlide());
+        }
 
         // Keyboard navigation
         document.addEventListener('keydown', (e) => {
@@ -238,6 +402,113 @@ class GalleryLoader {
                 if (e.key === 'Escape') this.closeModal();
             }
         });
+    }
+
+    // =========================
+    // MOBILE SWIPE GESTURES
+    // =========================
+    setupMobileSwipeGestures() {
+        const modalImageContainer = document.getElementById('modal-image-container');
+        if (!modalImageContainer) return;
+
+        let startX = 0;
+        let startY = 0;
+        let currentX = 0;
+        let currentY = 0;
+        let isDragging = false;
+        let swipeIndicator = document.getElementById('swipe-indicator');
+        let swipeThreshold = 100; // Minimum distance for swipe
+        let swipeTimeout;
+
+        // Touch start
+        modalImageContainer.addEventListener('touchstart', (e) => {
+            if (!this.isMobile) return;
+            
+            const touch = e.touches[0];
+            startX = touch.clientX;
+            startY = touch.clientY;
+            currentX = startX;
+            currentY = startY;
+            isDragging = true;
+
+            // Hide swipe indicator on first interaction
+            if (swipeIndicator) {
+                swipeIndicator.classList.add('hidden');
+            }
+
+            e.preventDefault();
+        }, { passive: false });
+
+        // Touch move
+        modalImageContainer.addEventListener('touchmove', (e) => {
+            if (!isDragging || !this.isMobile) return;
+
+            const touch = e.touches[0];
+            currentX = touch.clientX;
+            currentY = touch.clientY;
+
+            const deltaX = currentX - startX;
+            const deltaY = currentY - startY;
+
+            // Only handle horizontal swipes
+            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                // Provide visual feedback
+                if (deltaX > 30) {
+                    modalImageContainer.classList.add('swiping-right');
+                    modalImageContainer.classList.remove('swiping-left');
+                } else if (deltaX < -30) {
+                    modalImageContainer.classList.add('swiping-left');
+                    modalImageContainer.classList.remove('swiping-right');
+                } else {
+                    modalImageContainer.classList.remove('swiping-left', 'swiping-right');
+                }
+
+                e.preventDefault(); // Prevent page scroll
+            }
+        }, { passive: false });
+
+        // Touch end
+        modalImageContainer.addEventListener('touchend', (e) => {
+            if (!isDragging || !this.isMobile) return;
+
+            const deltaX = currentX - startX;
+            const deltaY = currentY - startY;
+
+            // Reset visual feedback
+            modalImageContainer.classList.remove('swiping-left', 'swiping-right');
+            modalImageContainer.classList.add('swipe-complete');
+
+            // Clear feedback after animation
+            setTimeout(() => {
+                modalImageContainer.classList.remove('swipe-complete');
+            }, 500);
+
+            // Check for horizontal swipe
+            if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > swipeThreshold) {
+                if (deltaX > 0) {
+                    // Swipe right - previous image
+                    this.prevImage();
+                } else {
+                    // Swipe left - next image  
+                    this.nextImage();
+                }
+            }
+
+            isDragging = false;
+            e.preventDefault();
+        }, { passive: false });
+
+        // Handle swipe up to close modal (bonus gesture)
+        modalImageContainer.addEventListener('touchend', (e) => {
+            if (!this.isMobile) return;
+            
+            const deltaY = currentY - startY;
+            
+            // Swipe up to close
+            if (deltaY < -swipeThreshold && Math.abs(deltaY) > Math.abs(currentX - startX)) {
+                this.closeModal();
+            }
+        }, { passive: false });
     }
 
     switchViewMode(mode) {
@@ -263,13 +534,49 @@ class GalleryLoader {
         
         document.getElementById('modal-image').src = image.src;
         
+        // Update mobile counter
+        this.updateModalCounter();
+        
+        // Show modal and prevent body scroll
         document.getElementById('image-modal').classList.add('active');
+        document.body.classList.add('modal-open');
         document.body.style.overflow = 'hidden';
+        
+        // Show swipe indicator on mobile after a delay
+        if (this.isMobile) {
+            const swipeIndicator = document.getElementById('swipe-indicator');
+            if (swipeIndicator) {
+                setTimeout(() => {
+                    swipeIndicator.classList.remove('hidden');
+                }, 1000);
+                
+                // Auto-hide swipe indicator after 5 seconds
+                setTimeout(() => {
+                    swipeIndicator.classList.add('hidden');
+                }, 6000);
+            }
+        }
     }
 
     closeModal() {
         document.getElementById('image-modal').classList.remove('active');
+        document.body.classList.remove('modal-open');
         document.body.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.width = '';
+        
+        // Hide swipe indicator
+        const swipeIndicator = document.getElementById('swipe-indicator');
+        if (swipeIndicator) {
+            swipeIndicator.classList.add('hidden');
+        }
+    }
+
+    updateModalCounter() {
+        const counter = document.getElementById('modal-counter');
+        if (counter) {
+            counter.textContent = `${this.currentImageIndex + 1} / ${this.images.length}`;
+        }
     }
 
     prevImage() {
@@ -285,6 +592,9 @@ class GalleryLoader {
     updateModalImage() {
         const image = this.images[this.currentImageIndex];
         document.getElementById('modal-image').src = image.src;
+        
+        // Update mobile counter
+        this.updateModalCounter();
     }
 
     prevSlide() {
