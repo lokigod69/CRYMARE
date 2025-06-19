@@ -7,6 +7,7 @@
  * D1-Dx: Winter Chapel
  * And so on...
  * Updated: Added artistic loading mechanisms for mobile experience
+ * Updated: Enhanced with smooth swipe animations for modal navigation
  */
 
 // Gallery series configuration with unique fonts
@@ -579,17 +580,18 @@ class GalleryLoader {
         }
     }
 
+    // Navigation methods (enhanced with swipe animations in gallery-animations.js)
     prevImage() {
         this.currentImageIndex = (this.currentImageIndex - 1 + this.images.length) % this.images.length;
-        this.updateModalImage();
+        this.updateModalImage('prev');
     }
 
     nextImage() {
         this.currentImageIndex = (this.currentImageIndex + 1) % this.images.length;
-        this.updateModalImage();
+        this.updateModalImage('next');
     }
 
-    updateModalImage() {
+    updateModalImage(direction = 'next') {
         const image = this.images[this.currentImageIndex];
         document.getElementById('modal-image').src = image.src;
         

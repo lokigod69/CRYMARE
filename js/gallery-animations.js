@@ -466,50 +466,79 @@ class GalleryAnimations {
             };
         }
 
-        // Enhanced image transition animations with mobile optimization
+        // Enhanced image transition animations with smooth swipe effects
         const originalUpdateModalImage = window.galleryLoader?.updateModalImage;
         if (originalUpdateModalImage && window.galleryLoader) {
-            window.galleryLoader.updateModalImage = function() {
+            window.galleryLoader.updateModalImage = function(direction = 'next') {
                 const modalImage = modal.querySelector('.modal-image');
                 const counter = modal.querySelector('.modal-counter');
 
                 if (!modalImage) return; // Exit if modal image doesn't exist
 
-                // Smooth image transition
+                // Determine swipe direction and distances
                 const isMobileView = window.innerWidth <= 768;
+                const slideDistance = isMobileView ? window.innerWidth : 100;
+                const isSwipeLeft = direction === 'next';
+                const exitX = isSwipeLeft ? -slideDistance : slideDistance;
+                const enterX = isSwipeLeft ? slideDistance : -slideDistance;
+
+                // Create smooth swipe-out animation
                 gsap.to(modalImage, {
-                    duration: 0.3,
+                    duration: 0.4,
+                    x: exitX,
                     opacity: 0,
-                    x: isMobileView ? -15 : -30,
                     ease: 'power2.in',
                     onComplete: () => {
                         // Update image source
                         originalUpdateModalImage.call(this);
                         
-                        // Animate counter update (mobile)
+                        // Animate counter update
                         if (counter) {
-                            gsap.from(counter, {
-                                duration: 0.4,
-                                scale: 1.1,
-                                ease: 'back.out(1.7)'
-                            });
-                        }
-                        
-                        // Animate in new image
-                        const isMobileView = window.innerWidth <= 768;
-                        if (modalImage) {
-                            gsap.fromTo(modalImage,
-                                { opacity: 0, x: isMobileView ? 15 : 30 },
+                            gsap.fromTo(counter, 
+                                { scale: 1 },
                                 {
-                                    duration: 0.5,
-                                    opacity: 1,
-                                    x: 0,
-                                    ease: 'power2.out'
+                                    duration: 0.3,
+                                    scale: 1.1,
+                                    ease: 'back.out(1.7)',
+                                    yoyo: true,
+                                    repeat: 1
                                 }
                             );
                         }
+                        
+                        // Prepare new image for swipe-in animation
+                        gsap.set(modalImage, { 
+                            x: enterX, 
+                            opacity: 0 
+                        });
+                        
+                        // Animate new image sliding in
+                        gsap.to(modalImage, {
+                            duration: 0.5,
+                            x: 0,
+                            opacity: 1,
+                            ease: 'power3.out',
+                            delay: 0.1
+                        });
                     }
                 });
+            };
+        }
+
+        // Enhanced navigation methods with direction tracking
+        const originalPrevImage = window.galleryLoader?.prevImage;
+        if (originalPrevImage && window.galleryLoader) {
+            window.galleryLoader.prevImage = function() {
+                this.currentImageIndex = (this.currentImageIndex - 1 + this.images.length) % this.images.length;
+                this.updateModalImage('prev'); // Pass direction
+            };
+        }
+
+        const originalNextImage = window.galleryLoader?.nextImage;
+        if (originalNextImage && window.galleryLoader) {
+            window.galleryLoader.nextImage = function() {
+                this.currentImageIndex = (this.currentImageIndex + 1) % this.images.length;
+                this.updateModalImage('next'); // Pass direction
             };
         }
     }

@@ -865,20 +865,30 @@
     touch-action: pan-x;
 }
 
-/* Swipe Feedback Animation */
+/* Enhanced Swipe Feedback Animations */
 .modal-image-container.swiping-left .modal-image {
     transform: translateX(-20px);
     transition: transform 0.3s ease;
+    filter: brightness(0.9);
 }
 
 .modal-image-container.swiping-right .modal-image {
     transform: translateX(20px);
     transition: transform 0.3s ease;
+    filter: brightness(0.9);
 }
 
 .modal-image-container.swipe-complete .modal-image {
     transform: translateX(0);
     transition: transform 0.5s ease;
+    filter: brightness(1);
+}
+
+/* Smooth modal image transitions */
+.modal-image {
+    transition: none; /* Let GSAP handle all transitions */
+    will-change: transform, opacity;
+    backface-visibility: hidden;
 }
 
 /* Mobile-specific Loading Improvements */
