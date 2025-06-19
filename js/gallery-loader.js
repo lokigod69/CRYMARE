@@ -548,12 +548,12 @@ class GalleryLoader {
             if (swipeIndicator) {
                 setTimeout(() => {
                     swipeIndicator.classList.remove('hidden');
-                }, 1000);
+                }, 800);
                 
-                // Auto-hide swipe indicator after 5 seconds
+                // Auto-hide swipe indicator after 3 seconds (faster since it's more subtle)
                 setTimeout(() => {
                     swipeIndicator.classList.add('hidden');
-                }, 6000);
+                }, 3800);
             }
         }
     }
