@@ -2,6 +2,7 @@
  * Phase 3: Advanced GSAP Animations for Crymare Gallery Pages
  * Premium effects: Magnetic cursor, image reveals, smooth transitions, zoom effects
  * Updated: Enhanced loading animations for mobile experience
+ * Updated: Progressive scroll-based opacity animations for mobile artwork cards
  */
 
 gsap.registerPlugin(ScrollTrigger, Draggable, MotionPathPlugin);

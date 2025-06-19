@@ -62,36 +62,83 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Artwork cards staggered reveal with parallax
-    gsap.utils.toArray('.artwork-card').forEach((card, index) => {
-        // Main card animation
-        gsap.from(card, {
-            scrollTrigger: {
-                trigger: card,
-                start: 'top 85%',
-                end: 'bottom 15%',
-                toggleActions: 'play none none reverse'
-            },
-            duration: 1,
-            y: 80,
-            opacity: 0,
-            scale: 0.95,
-            ease: 'power3.out',
-            delay: index * 0.1
+    // Enhanced artwork cards with progressive opacity animation
+    if (window.innerWidth <= 768) {
+        // Mobile: Progressive opacity-based scroll animation
+        gsap.utils.toArray('.artwork-card').forEach((card, index) => {
+            // Set initial state
+            gsap.set(card, { opacity: 0.1, y: 20, scale: 0.98 });
+            
+            // Progressive scroll-based animation
+            gsap.to(card, {
+                scrollTrigger: {
+                    trigger: card,
+                    start: 'top 100%',
+                    end: 'bottom 20%',
+                    scrub: 1.5, // Smooth scrubbing animation
+                    onUpdate: (self) => {
+                        // Calculate progress through viewport
+                        const progress = self.progress;
+                        // Apply progressive opacity and scaling
+                        const opacity = Math.min(0.1 + (progress * 0.9), 1);
+                        const y = 20 * (1 - progress);
+                        const scale = 0.98 + (0.02 * progress);
+                        
+                        gsap.set(card, {
+                            opacity: opacity,
+                            y: y,
+                            scale: scale
+                        });
+                    }
+                },
+                duration: 0, // Duration handled by scrub
+                ease: 'none'
+            });
+            
+            // Subtle parallax effect on card images
+            gsap.to(card.querySelector('img'), {
+                scrollTrigger: {
+                    trigger: card,
+                    start: 'top bottom',
+                    end: 'bottom top',
+                    scrub: 1
+                },
+                y: -20,
+                ease: 'none'
+            });
         });
-        
-        // Subtle parallax effect on card images
-        gsap.to(card.querySelector('img'), {
-            scrollTrigger: {
-                trigger: card,
-                start: 'top bottom',
-                end: 'bottom top',
-                scrub: 1
-            },
-            y: -30,
-            ease: 'none'
+    } else {
+        // Desktop: Keep existing animation
+        gsap.utils.toArray('.artwork-card').forEach((card, index) => {
+            // Main card animation
+            gsap.from(card, {
+                scrollTrigger: {
+                    trigger: card,
+                    start: 'top 85%',
+                    end: 'bottom 15%',
+                    toggleActions: 'play none none reverse'
+                },
+                duration: 1,
+                y: 80,
+                opacity: 0,
+                scale: 0.95,
+                ease: 'power3.out',
+                delay: index * 0.1
+            });
+            
+            // Subtle parallax effect on card images
+            gsap.to(card.querySelector('img'), {
+                scrollTrigger: {
+                    trigger: card,
+                    start: 'top bottom',
+                    end: 'bottom top',
+                    scrub: 1
+                },
+                y: -30,
+                ease: 'none'
+            });
         });
-    });
+    }
     
     // Theme cards reveal with rotation
     gsap.utils.toArray('.theme-card').forEach((card, index) => {
@@ -252,25 +299,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // =========================
-    // 5. MOBILE OPTIMIZATIONS
-    // =========================
-    
-    // Disable certain animations on mobile for performance
-    if (window.innerWidth <= 768) {
-        ScrollTrigger.batch('.artwork-card', {
-            onEnter: elements => gsap.from(elements, {
-                duration: 0.8,
-                y: 50,
-                opacity: 0,
-                stagger: 0.1,
-                ease: 'power2.out'
-            }),
-            start: 'top 85%'
-        });
-    }
-    
-    // =========================
-    // 6. REFRESH SCROLLTRIGGER
+    // 5. REFRESH SCROLLTRIGGER
     // =========================
     
     // Ensure proper calculations after images load
@@ -284,4 +313,5 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     console.log('🎨 Crymare Gallery GSAP animations initialized successfully!');
+    console.log('📱 Mobile progressive scroll animation enabled');
 }); 
